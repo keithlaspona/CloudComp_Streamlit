@@ -5,7 +5,7 @@ Render External Link: postgresql://user1:IgiGkzZBqdpyGfr3F5aclDLHdzwU4iX9@dpg-d0
     host = "dpg-d0k14ct6ubrc73asal2g-a.oregon-postgres.render.com",
     port = "5432"
 
-
+Deployed Link: https://cloudcomp-streamlit.onrender.com
 
 
 Google Colab ETL Datawarehouse Activity Link (By Pair): https://colab.research.google.com/drive/1bZrVO6RIzy_8Qdu-w7mU_Pmo5Mmz-3fO?usp=sharing
