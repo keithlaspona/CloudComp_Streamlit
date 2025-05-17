@@ -9,7 +9,6 @@ import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import random
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,6 @@ st.set_page_config(
     layout="wide",
 )
 
-# Add custom CSS for styling
 st.markdown("""
 <style>
     .stApp {
@@ -76,7 +74,7 @@ def get_connection():
         logger.error(f"Database connection error: {e}")
         return None
 
-@st.cache_data(ttl=3600)  # Cache for 1 hour
+@st.cache_data(ttl=3600)  
 def load_data():
     try:
         engine = get_connection()
@@ -99,25 +97,23 @@ def load_data():
         
         logger.info(f"Successfully loaded {len(df)} rows of data.")
         
-        # Show raw data info for debugging
         logger.info(f"Columns before processing: {df.columns.tolist()}")
         logger.info(f"Sample date values: {df['Order Date'].head().tolist() if 'Order Date' in df.columns else 'No Order Date column'}")
         
-        # Display sample of raw data for debugging
         logger.info(f"Sample 'Price Each' values: {df['Price Each'].head().tolist() if 'Price Each' in df.columns else 'No Price Each column'}")
         
         # ——— Parsing & cleanup ———
-        # Handle the date column - assume it might be a date or datetime string
+        # Handle the date column
         df['Order Date'] = pd.to_datetime(
             df['Order Date'],
             errors='coerce'
         )
         
-        # For Quantity Ordered, first ensure it's a string then convert to numeric
+        # For Quantity Ordered
         df['Quantity Ordered'] = df['Quantity Ordered'].astype(str).str.replace(',', '').str.strip()
         df['Quantity Ordered'] = pd.to_numeric(df['Quantity Ordered'], errors='coerce')
         
-        # For Price Each, handle potential string formatting with currency symbols
+        # For Price Each
         if 'Price Each' in df.columns:
             # If price is a string with currency symbols or commas
             if df['Price Each'].dtype == object:
@@ -144,7 +140,7 @@ def load_data():
         df['Revenue'] = df['Quantity Ordered'] * df['Price Each']
         df['Month'] = df['Order Date'].dt.strftime('%Y-%m')  # More standard month format
         
-        # Extract city from address with more robust approach
+        # Extract city from address
         def extract_city(address):
             if not isinstance(address, str):
                 return 'Unknown'
@@ -252,12 +248,12 @@ with st.sidebar:
     # If nothing selected, include all cities
     if not cities:
         cities = df['City'].unique()
+
     
-    # Color theme selector with Viridis as default
     color_theme = st.selectbox(
         "Chart Color Theme",
         options=["Viridis", "Blues", "Plasma", "Inferno", "Magma", "Cividis", "Rainbow"],
-        index=0  # Viridis is now the default (index 0)
+        index=0
     )
 
 # ————— APPLY FILTERS —————
@@ -291,7 +287,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Create metric summary at the top with custom styling
+# Create metric summary
 col1, col2, col3, col4 = st.columns(4)
 with col1:
     total_revenue = filtered['Revenue'].sum()
@@ -332,7 +328,7 @@ with col4:
 # Create two columns for better space usage
 col1, col2 = st.columns(2)
 
-# 1. Top Products by Quantity - Using Plotly for better colors
+# 1. Top Products by Quantity 
 with col1:
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.subheader("Top Products by Quantity Sold")
@@ -345,7 +341,6 @@ with col1:
         .head(10)
     )
     
-    # Use Plotly for a colorful bar chart
     fig = px.bar(
         qty_by_prod,
         orientation='h',
@@ -364,7 +359,7 @@ with col1:
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# 2. Revenue by Product - Using Plotly for better colors
+# 2. Revenue by Product
 with col2:
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.subheader("Revenue by Product")
@@ -377,7 +372,6 @@ with col2:
         .head(10)
     )
     
-    # Use Plotly for a colorful bar chart
     fig = px.bar(
         rev_by_prod,
         orientation='h',
@@ -397,7 +391,7 @@ with col2:
     st.plotly_chart(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# 3. Monthly Revenue Trend with Plotly - FIXED ERROR HERE
+# 3. Monthly Revenue Trend with Plotly
 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
 st.subheader("Monthly Revenue Trend")
 
@@ -411,7 +405,6 @@ if not filtered.empty:
     )
     monthly_data.columns = ['Month', 'Revenue']
     
-    # Use Plotly for a line chart with area fill
     fig = px.line(
         monthly_data, 
         x='Month', 
@@ -421,7 +414,6 @@ if not filtered.empty:
         color_discrete_sequence=[px.colors.sequential.Viridis[7]]  # Use direct color reference
     )
     
-    # Add an area fill under the line - FIXED
     fig.add_trace(
         go.Scatter(
             x=monthly_data['Month'],
@@ -446,13 +438,12 @@ else:
     st.info("No monthly data available for the selected filters.")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 4. Orders Over Time with Plotly
+# 4. Orders Over Time
 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
 st.subheader("Orders Over Time")
 
 if not filtered.empty:
     try:
-        # Create a dataframe for plotting
         orders_data = (
             filtered
             .groupby(filtered['Order Date'].dt.date)['Order ID']
@@ -461,7 +452,6 @@ if not filtered.empty:
         )
         orders_data.columns = ['Date', 'Order Count']
         
-        # Use Plotly for a line chart with area fill
         fig = px.line(
             orders_data, 
             x='Date', 
@@ -470,7 +460,6 @@ if not filtered.empty:
             color_discrete_sequence=[px.colors.sequential.Viridis[5]]  # Use direct color reference
         )
         
-        # Add an area fill under the line - FIXED
         fig.add_trace(
             go.Scatter(
                 x=orders_data['Date'],
@@ -497,10 +486,9 @@ else:
     st.info("No order date data available for the selected filters.")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Create two columns for the last charts
 col1, col2 = st.columns(2)
 
-# 5. Revenue by City with Plotly
+# 5. Revenue by City
 with col1:
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.subheader("Revenue by City")
@@ -510,11 +498,10 @@ with col1:
             filtered
             .groupby('City')['Revenue']
             .sum()
-            .sort_values(ascending=True)  # Sort ascending for horizontal bar
+            .sort_values(ascending=True)
             .reset_index()
         )
         
-        # Use Plotly for a colorful bar chart
         fig = px.bar(
             rev_by_city,
             y='City',
@@ -537,13 +524,12 @@ with col1:
         st.info("No city data available for the selected filters.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# 6. Revenue by Day of Week with Plotly
+# 6. Revenue by Day of Week
 with col2:
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.subheader("Revenue by Day of Week")
     
     try:
-        # Create day of week column
         weekday_mapping = {
             0: 'Monday',
             1: 'Tuesday',
@@ -555,11 +541,9 @@ with col2:
         }
         weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         
-        # Get day of week as integer and map to name
         day_revenue = filtered.copy()
         day_revenue['Weekday'] = day_revenue['Order Date'].dt.dayofweek.map(weekday_mapping)
         
-        # Group by weekday and create a dataframe for plotting
         weekday_data = (
             day_revenue
             .groupby('Weekday')['Revenue']
@@ -568,7 +552,6 @@ with col2:
             .reset_index()
         )
         
-        # Use Plotly for a colorful bar chart
         fig = px.bar(
             weekday_data,
             x='Weekday',
@@ -592,7 +575,6 @@ with col2:
         st.info("Could not generate Revenue by Day of Week chart.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Add raw data table (togglable)
 st.markdown('<div class="chart-container">', unsafe_allow_html=True)
 st.subheader("Data Diagnostics")
 with st.expander("Show Data Samples and Diagnostics"):
